@@ -1,0 +1,63 @@
+{
+  "name": "fokusaivideogenerator",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "node server/index.js",
+    "build": "next build",
+    "start": "node server/index.js",
+    "server": "node server/index.js",
+    "electron:dev": "cross-env PORT=8790 electron .",
+    "electron:build": "electron-builder --win --x64",
+    "electron:pack": "electron-builder --dir",
+    "license:make-keys": "node scripts/generateRsaKeys.js",
+    "license:make-token": "node scripts/generateActivationToken.js --privkey ./license/private_key.pem --cred fokusai-EXAMPLE --license EXAMPLE --days 365"
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.86.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "next": "^14.2.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.fokusai.app",
+    "productName": "FokusAI Generator Veo",
+    "asar": false,
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!**/.next/cache/**",
+      "!uploads/*.tmp",
+      "electron/**",
+      "!license/private_key.pem",
+      "!scripts/generateActivationToken.js",
+      "!scripts/generateRsaKeys.js"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "FokusAI"
+    }
+  }
+}
