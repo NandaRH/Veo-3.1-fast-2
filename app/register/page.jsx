@@ -50,10 +50,22 @@ export default function RegisterPage() {
         setStatus("Konfigurasi Supabase belum diset.");
         return;
       }
+
+      // Tentukan URL redirect setelah user klik link konfirmasi di email.
+      // Menggunakan origin dari browser (bisa localhost saat dev, atau domain Railway/production),
+      // lalu diarahkan ke dashboard.
+      let emailRedirectTo;
+      try {
+        if (typeof window !== "undefined" && window.location?.origin) {
+          emailRedirectTo = `${window.location.origin}/dashboard`;
+        }
+      } catch (_) {}
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
         options: {
+          emailRedirectTo,
           data: { name: name.trim(), full_name: name.trim(), plan: "free" },
         },
       });
