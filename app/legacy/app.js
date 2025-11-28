@@ -1841,25 +1841,10 @@ export function initLegacyApp({ initialMode } = {}) {
     }
     const infoEl = el("frameStartUploadInfo");
     if (infoEl) {
-      const parts = [];
-      parts.push(`Rasio gambar: ${aspectLabel}`);
-      if (frameStartImage.mediaId)
-        parts.push(`Media ID: ${frameStartImage.mediaId}`);
-      if (frameStartImage.uploadInfo?.uploadToken)
-        parts.push(`Upload Token: ${frameStartImage.uploadInfo.uploadToken}`);
-      if (frameStartImage.uploadInfo?.mediaGenerationId)
-        parts.push(
-          `Media Gen ID: ${frameStartImage.uploadInfo.mediaGenerationId}`
-        );
-      if (
-        Number.isFinite(frameStartImage.uploadInfo?.width) &&
-        Number.isFinite(frameStartImage.uploadInfo?.height)
-      ) {
-        parts.push(
-          `Resolusi upload: ${frameStartImage.uploadInfo.width}x${frameStartImage.uploadInfo.height}`
-        );
-      }
-      infoEl.textContent = parts.join(" | ");
+      // Tampilkan teks singkat saja supaya tidak memenuhi/lebar ke samping
+      infoEl.textContent = frameStartImage.mediaId
+        ? "Media ID sudah diisi untuk frame ini."
+        : "";
       try {
         const destName = (() => {
           try {
@@ -1949,25 +1934,10 @@ export function initLegacyApp({ initialMode } = {}) {
     }
     const infoEl = el("frameEndUploadInfo");
     if (infoEl) {
-      const parts = [];
-      parts.push(`Rasio gambar: ${aspectLabel}`);
-      if (frameEndImage.mediaId)
-        parts.push(`Media ID: ${frameEndImage.mediaId}`);
-      if (frameEndImage.uploadInfo?.uploadToken)
-        parts.push(`Upload Token: ${frameEndImage.uploadInfo.uploadToken}`);
-      if (frameEndImage.uploadInfo?.mediaGenerationId)
-        parts.push(
-          `Media Gen ID: ${frameEndImage.uploadInfo.mediaGenerationId}`
-        );
-      if (
-        Number.isFinite(frameEndImage.uploadInfo?.width) &&
-        Number.isFinite(frameEndImage.uploadInfo?.height)
-      ) {
-        parts.push(
-          `Resolusi upload: ${frameEndImage.uploadInfo.width}x${frameEndImage.uploadInfo.height}`
-        );
-      }
-      infoEl.textContent = parts.join(" | ");
+      // Hanya info singkat agar kotak tidak membesar
+      infoEl.textContent = frameEndImage.mediaId
+        ? "Media ID sudah diisi untuk frame ini."
+        : "";
       try {
         const destName = (() => {
           try {
