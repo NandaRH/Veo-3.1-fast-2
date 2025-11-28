@@ -15,6 +15,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="id">
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <meta name="color-scheme" content="dark" />
         <style>{`html,body{background:#000;color:#f5f7fb}`}</style>
       </head>
