@@ -4631,3 +4631,20 @@ body.route-login .app-shell {
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile: Mode Prompt cards scroll horizontally */
+@media (max-width: 640px) {
+  .sidebar .mode-grid {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    margin-bottom: 18px;
+    gap: 10px;
+  }
+  .sidebar .mode-card {
+    flex: 0 0 auto;
+    min-width: 190px;
+    max-width: 70vw;
+  }
+}
