@@ -18,6 +18,7 @@ export default function AdminUsersPage() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [detailUser, setDetailUser] = useState(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -100,6 +101,53 @@ export default function AdminUsersPage() {
     } catch (e) {
       setStatus(String(e?.message || e));
     }
+  };
+
+  const deleteUser = async (user) => {
+    if (!user || !user.id) return;
+    if (String(user.plan || "").toLowerCase() === "admin") {
+      setStatus("Tidak dapat menghapus akun admin.");
+      return;
+    }
+    const ok = window.confirm(
+      `Hapus akun untuk ${user.email || "user"}? Tindakan ini tidak dapat dibatalkan.`
+    );
+    if (!ok) return;
+    try {
+      setStatus("Menghapus akun...");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = String(session?.access_token || "");
+      const resp = await fetch(`/api/admin/users/${user.id}`, {
+        method: "DELETE",
+        headers: {
+          "x-admin-secret": secret,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        setStatus(String(data?.error || "Gagal menghapus akun"));
+        return;
+      }
+      setItems((prev) => prev.filter((x) => x.id !== user.id));
+      setDetailUser(null);
+      setStatus("Akun dihapus.");
+    } catch (e) {
+      setStatus(String(e?.message || e));
+    }
+  };
+
+  const formatExpiry = (u) => {
+    const plan = String(u.plan || "").toLowerCase();
+    const exp = u.plan_expiry;
+    if (plan !== "monthly" || !exp) return "—";
+    const now = Date.now();
+    const diff = exp - now;
+    if (diff <= 0) return "Expired";
+    const days = Math.ceil(diff / (24 * 60 * 60 * 1000));
+    return `${days} hari lagi`;
   };
 
   return (
@@ -233,13 +281,7 @@ export default function AdminUsersPage() {
             </div>
           ) : null}
         </div>
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "separate",
-            borderSpacing: "0 8px",
-          }}
-        >
+        <table className="admin-table">
           <thead>
             <tr>
               <th
@@ -260,26 +302,21 @@ export default function AdminUsersPage() {
               <th
                 style={{ textAlign: "left", color: "#f4d03f", fontWeight: 700 }}
               >
-                Veo
+                Expire
               </th>
               <th
                 style={{ textAlign: "left", color: "#f4d03f", fontWeight: 700 }}
               >
-                Sora 2
-              </th>
-              <th
-                style={{ textAlign: "left", color: "#f4d03f", fontWeight: 700 }}
-              >
-                Image
+                Aksi
               </th>
             </tr>
           </thead>
           <tbody>
             {items.map((u) => (
-              <tr key={u.id}>
-                <td style={{ color: "#f5e6d3" }}>{u.email}</td>
-                <td style={{ color: "#f5e6d3" }}>{u.full_name || "-"}</td>
-                <td>
+              <tr key={u.id} className="admin-row">
+                <td className="admin-cell primary">{u.email}</td>
+                <td className="admin-cell">{u.full_name || "-"}</td>
+                <td className="admin-cell">
                   <select
                     className="dropdown"
                     value={u.plan || "free"}
@@ -291,13 +328,23 @@ export default function AdminUsersPage() {
                       </option>
                     ))}
                   </select>
+                  <div className="admin-plan-tag">
+                    {String(u.plan || "").toLowerCase() === "monthly"
+                      ? formatExpiry(u)
+                      : String(u.plan || "free")}
+                  </div>
                 </td>
-                <td style={{ color: "#f5e6d3" }}>{Number(u.veo_count || 0)}</td>
-                <td style={{ color: "#f5e6d3" }}>
-                  {Number(u.sora2_count || 0)}
+                <td className="admin-cell">
+                  <span className="admin-expiry">{formatExpiry(u)}</span>
                 </td>
-                <td style={{ color: "#f5e6d3" }}>
-                  {Number(u.image_count || 0)}
+                <td className="admin-cell actions">
+                  <button
+                    className="btn ghost"
+                    type="button"
+                    onClick={() => setDetailUser(u)}
+                  >
+                    Detail
+                  </button>
                 </td>
               </tr>
             ))}
@@ -367,6 +414,117 @@ export default function AdminUsersPage() {
                 }}
               >
                 Ya, Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {detailUser && (
+        <div
+          className="modal show"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDetailUser(null);
+          }}
+        >
+          <div className="modal-content" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <div style={{ fontWeight: 700, color: "#f4d03f" }}>
+                Detail User
+              </div>
+              <button className="btn ghost" onClick={() => setDetailUser(null)}>
+                Tutup
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{ flexDirection: "column", gap: 12 }}
+            >
+              <div>
+                <div style={{ fontSize: 12, color: "#9ca3af" }}>Email</div>
+                <div style={{ fontWeight: 600 }}>{detailUser.email}</div>
+              </div>
+              <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: "#9ca3af" }}>Nama</div>
+                  <div style={{ fontWeight: 600 }}>
+                    {detailUser.full_name || "-"}
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, color: "#9ca3af" }}>Plan</div>
+                  <div style={{ fontWeight: 600 }}>{detailUser.plan}</div>
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                  Status Expire
+                </div>
+                <div style={{ fontWeight: 600 }}>{formatExpiry(detailUser)}</div>
+              </div>
+              {(() => {
+                const veo = Number(detailUser.veo_count || 0);
+                const sora = Number(detailUser.sora2_count || 0);
+                const img = Number(detailUser.image_count || 0);
+                const max = Math.max(1, veo, sora, img);
+                const pct = (v) => `${(v / max) * 100}%`;
+                return (
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ fontSize: 12, color: "#9ca3af" }}>
+                      Status Pemakaian
+                    </div>
+                    <div className="admin-usage-row">
+                      <span>Veo</span>
+                      <div className="admin-usage-bar">
+                        <div
+                          className="fill veo"
+                          style={{ width: pct(veo) }}
+                        />
+                      </div>
+                      <span className="count">{veo}</span>
+                    </div>
+                    <div className="admin-usage-row">
+                      <span>Sora 2</span>
+                      <div className="admin-usage-bar">
+                        <div
+                          className="fill sora"
+                          style={{ width: pct(sora) }}
+                        />
+                      </div>
+                      <span className="count">{sora}</span>
+                    </div>
+                    <div className="admin-usage-row">
+                      <span>Image</span>
+                      <div className="admin-usage-bar">
+                        <div
+                          className="fill image"
+                          style={{ width: pct(img) }}
+                        />
+                      </div>
+                      <span className="count">{img}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+            <div
+              className="modal-footer"
+              style={{ justifyContent: "space-between", gap: 10 }}
+            >
+              <div
+                className="settings-help"
+                style={{ color: "#f97373", fontSize: 12 }}
+              >
+                Hapus akun akan menghapus data user dari sistem.
+              </div>
+              <button
+                className="btn danger"
+                type="button"
+                onClick={() => deleteUser(detailUser)}
+                disabled={
+                  String(detailUser.plan || "").toLowerCase() === "admin"
+                }
+              >
+                Delete Akun
               </button>
             </div>
           </div>

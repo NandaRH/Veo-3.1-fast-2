@@ -1421,6 +1421,26 @@ function CropCanvas({
     onUp();
   };
 
+  // Fallback untuk browser yang belum mendukung Pointer Events
+  const supportsPointer =
+    typeof window !== "undefined" && "PointerEvent" in window;
+
+  const onTouchStart = (e) => {
+    if (supportsPointer) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    e.preventDefault?.();
+    startDrag(t.clientX, t.clientY);
+  };
+
+  const onTouchMove = (e) => {
+    if (supportsPointer) return;
+    const t = e.touches && e.touches[0];
+    if (!t) return;
+    e.preventDefault?.();
+    moveDrag(t.clientX, t.clientY);
+  };
+
   return (
     <canvas
       ref={canvasRef}
@@ -1438,6 +1458,10 @@ function CropCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onUp}
+      onTouchCancel={onUp}
     />
   );
 }

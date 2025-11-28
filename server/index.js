@@ -527,21 +527,37 @@ app.get("/api/admin/users", requireAdmin, async (req, res) => {
       .order("created_at", { ascending: false });
     if (error)
       return res.status(500).json({ error: String(error.message || error) });
-    try {
-      const stats = readUsageStats();
-      const users = (data || []).map((u) => {
+
+    const stats = readUsageStats();
+
+    const users = await Promise.all(
+      (data || []).map(async (u) => {
         const s = stats?.[String(u.id || "")] || {};
+        let planExpiry = null;
+        try {
+          const { data: adminUser } = await srSupabase.auth.admin.getUserById(
+            String(u.id || "")
+          );
+          const meta = adminUser?.user?.user_metadata || {};
+          const pe = meta?.planExpiry;
+          if (typeof pe === "number" && Number.isFinite(pe)) {
+            planExpiry = pe;
+          } else if (typeof pe === "string" && pe.trim()) {
+            const n = Number(pe);
+            if (Number.isFinite(n)) planExpiry = n;
+          }
+        } catch (_) {}
         return {
           ...u,
+          plan_expiry: planExpiry,
           veo_count: (s.counts && s.counts.veo) || 0,
           sora2_count: (s.counts && s.counts.sora2) || 0,
           image_count: (s.counts && s.counts.image) || 0,
         };
-      });
-      return res.json({ ok: true, users });
-    } catch (_) {
-      return res.json({ ok: true, users: data || [] });
-    }
+      })
+    );
+
+    return res.json({ ok: true, users });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
@@ -575,6 +591,38 @@ app.post("/api/admin/users/:id/plan", requireAdmin, async (req, res) => {
       await srSupabase.auth.admin.updateUserById(id, { user_metadata: meta });
     } catch (_) {}
     res.json({ ok: true, user: data });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+  try {
+    if (!srSupabase)
+      return res.status(500).json({ error: "Supabase not configured" });
+    const id = String(req.params.id || "").trim();
+    if (!id) return res.status(400).json({ error: "Missing id" });
+
+    // Hapus dari tabel users
+    try {
+      await srSupabase.from("users").delete().eq("id", id);
+    } catch (_) {}
+
+    // Hapus akun auth Supabase (jika ada)
+    try {
+      await srSupabase.auth.admin.deleteUser(id);
+    } catch (_) {}
+
+    // Bersihkan statistik penggunaan lokal
+    try {
+      const stats = readUsageStats();
+      if (stats && Object.prototype.hasOwnProperty.call(stats, id)) {
+        const { [id]: _omit, ...rest } = stats;
+        writeUsageStats(rest);
+      }
+    } catch (_) {}
+
+    res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }

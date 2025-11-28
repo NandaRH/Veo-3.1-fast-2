@@ -1736,6 +1736,19 @@ pre {
   color: #e2e8f0;
 }
 
+.btn.danger {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.35);
+  color: #fee2e2;
+}
+
+.btn.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* Hero variant: Gold primary button */
 .btn.gold {
   border-radius: 999px;
@@ -3088,6 +3101,104 @@ body.free-locked .modal * {
   filter: brightness(0.98);
   transform: translateY(0);
   box-shadow: 0 8px 20px rgba(255, 200, 50, 0.3);
+}
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.admin-table thead th {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.admin-row {
+  background: radial-gradient(circle at top left, #0b1120, #020617);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+}
+
+.admin-row .admin-cell {
+  padding: 10px 14px;
+  color: #f5e6d3;
+  font-size: 14px;
+}
+
+.admin-row .admin-cell.primary {
+  font-weight: 600;
+}
+
+.admin-row td:first-child {
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+
+.admin-row td:last-child {
+  border-top-right-radius: 14px;
+  border-bottom-right-radius: 14px;
+}
+
+.admin-row .admin-cell.actions {
+  text-align: right;
+}
+
+.admin-plan-tag {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(30, 64, 175, 0.6);
+  border: 1px solid rgba(129, 140, 248, 0.7);
+  color: #e5e7eb;
+}
+
+.admin-expiry {
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+.admin-usage-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.admin-usage-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  overflow: hidden;
+}
+
+.admin-usage-bar .fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  border-radius: inherit;
+  transition: width 0.25s ease-out;
+}
+
+.admin-usage-bar .fill.veo {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.admin-usage-bar .fill.sora {
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+}
+
+.admin-usage-bar .fill.image {
+  background: linear-gradient(90deg, #f97316, #ea580c);
+}
+
+.admin-usage-row .count {
+  font-size: 12px;
+  color: #e5e7eb;
 }
 .accent {
   color: #a8ff7a;
