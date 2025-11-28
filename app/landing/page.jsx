@@ -36,7 +36,22 @@ export default function LandingPage() {
             />
           </div>
           <span className="brand-title">FokusAI Studio</span>
+          <label
+            htmlFor="main-nav-toggle"
+            className="nav-menu-toggle"
+            aria-label="Menu utama"
+          >
+            <span />
+            <span />
+            <span />
+          </label>
         </div>
+        <input
+          type="checkbox"
+          id="main-nav-toggle"
+          className="nav-toggle"
+          aria-hidden="true"
+        />
         <div className="nav-center nav-center-scroll">
           <a href="#fitur" className="nav-link">
             Fitur
