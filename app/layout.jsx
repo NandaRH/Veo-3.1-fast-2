@@ -20,6 +20,15 @@ export default function RootLayout({ children }) {
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
         <meta name="color-scheme" content="dark" />
+        <link
+          rel="icon"
+          type="image/png"
+          href="/images/fokusAI.png"
+        />
+        <link
+          rel="apple-touch-icon"
+          href="/images/fokusAI.png"
+        />
         <style>{`html,body{background:#000;color:#f5f7fb}`}</style>
       </head>
       <body className={inter.className} suppressHydrationWarning>
