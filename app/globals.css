@@ -3207,6 +3207,20 @@ body.free-locked .modal * {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+@media (max-width: 640px) {
+  .admin-filters {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .admin-filters > input.dropdown {
+    max-width: 100% !important;
+    width: 100%;
+  }
+  .admin-filters > div {
+    justify-content: flex-start;
+  }
+}
 .accent {
   color: #a8ff7a;
   text-shadow: 0 0 20px rgba(168, 255, 122, 0.25);

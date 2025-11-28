@@ -298,6 +298,7 @@ export default function AdminUsersPage() {
           ) : null}
         </div>
         <div
+          className="admin-filters"
           style={{
             display: "flex",
             justifyContent: "space-between",
