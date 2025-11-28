@@ -37,7 +37,7 @@ export default function LandingPage() {
           </div>
           <span className="brand-title">FokusAI Studio</span>
         </div>
-        <div className="nav-center">
+        <div className="nav-center nav-center-scroll">
           <a href="#fitur" className="nav-link">
             Fitur
           </a>

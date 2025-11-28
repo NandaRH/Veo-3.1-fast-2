@@ -2846,7 +2846,6 @@ body.free-locked .modal * {
   border: 1px solid rgba(255, 215, 0, 0.08);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35),
     inset 0 0 8px rgba(255, 215, 0, 0.02);
-  overflow: hidden;
   transition: transform 0.24s ease, opacity 0.24s ease, background 0.24s ease,
     box-shadow 0.24s ease;
 }
@@ -3220,6 +3219,11 @@ body.free-locked .modal * {
   .admin-filters > div {
     justify-content: flex-start;
   }
+}
+.nav-center-scroll {
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .accent {
   color: #a8ff7a;
