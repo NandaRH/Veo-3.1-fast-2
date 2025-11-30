@@ -51,26 +51,30 @@ export default function RegisterPage() {
         return;
       }
 
-      // Tentukan URL redirect setelah user klik link konfirmasi di email.
-      // Menggunakan origin dari browser (bisa localhost saat dev, atau domain Railway/production),
-      // lalu diarahkan ke dashboard.
-      let emailRedirectTo;
-      try {
-        if (typeof window !== "undefined" && window.location?.origin) {
-          emailRedirectTo = `${window.location.origin}/dashboard`;
-        }
-      } catch (_) {}
-
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password: password,
         options: {
-          emailRedirectTo,
+          // Paksa Supabase mengirim link verifikasi ke URL produksi
+          // setelah user klik "Confirm your mail".
+          emailRedirectTo: "https://fokusai.fun/login",
           data: { name: name.trim(), full_name: name.trim(), plan: "free" },
         },
       });
       if (error) {
-        setStatus(error.message || "Gagal mendaftar");
+        const rawMsg = (error.message || "").toLowerCase();
+
+        // Mapping khusus jika email sudah pernah digunakan / terdaftar
+        if (
+          rawMsg.includes("already registered") ||
+          rawMsg.includes("already exists") ||
+          rawMsg.includes("user already exists") ||
+          rawMsg.includes("user already registered")
+        ) {
+          setStatus("Email Sudah Terdaftar");
+        } else {
+          setStatus(error.message || "Gagal mendaftar");
+        }
         return;
       }
       setStatus("Registrasi berhasil. Silakan login.");

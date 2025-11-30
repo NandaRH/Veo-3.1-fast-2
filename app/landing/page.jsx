@@ -16,7 +16,7 @@ const VideoClient = dynamic(() => import("./VideoClient"), {
 });
 
 export const metadata = {
-  title: "FokusAI Studio — Landing",
+  title: "FokusAI Studio",
   description: "Landing untuk generator video, gambar, musik, dan galeri.",
 };
 
