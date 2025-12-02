@@ -1149,7 +1149,12 @@ export default function ImageGeneratorPage() {
                   }}
                 />
               </div>
-              <div className="crop-right" style={{ width: 220 }}>
+            </div>
+            <div className="modal-footer">
+              <div
+                className="crop-right"
+                style={{ width: 260, maxWidth: "60%" }}
+              >
                 <label style={{ fontSize: 12, color: "#9ca3af" }}>Zoom</label>
                 <input
                   type="range"
@@ -1164,8 +1169,6 @@ export default function ImageGeneratorPage() {
                   Seret gambar untuk posisi; geser slider untuk zoom.
                 </div>
               </div>
-            </div>
-            <div className="modal-footer">
               <button
                 className="btn primary"
                 onClick={async () => {
