@@ -657,35 +657,38 @@ export function initLegacyApp({ initialMode } = {}) {
   };
 
   // Load default config from server
-  (async () => {
-    try {
-      const r = await fetch("/api/config");
-      const cfg = await r.json();
-      CONFIG = { ...CONFIG, ...cfg };
-      // Set default UI nilai dari config
+    (async () => {
       try {
-        el("settingAspect").value =
-          CONFIG.defaultAspectRatio || "VIDEO_ASPECT_RATIO_LANDSCAPE";
+        const r = await fetch("/api/config");
+        const cfg = await r.json();
+        CONFIG = { ...CONFIG, ...cfg };
+        // Set default UI nilai dari config
+        try {
+          el("settingAspect").value =
+            CONFIG.defaultAspectRatio || "VIDEO_ASPECT_RATIO_LANDSCAPE";
+        } catch (_) {}
+        try {
+          updateModelBadge();
+        } catch (_) {}
+        try {
+          await syncQuotaFromServer();
+        } catch (_) {}
+        try {
+          updateQuotaUI();
+        } catch (_) {}
+        if (!singleImage.manualAspect) {
+          const aspectValue =
+            el("settingAspect")?.value ||
+            CONFIG.defaultAspectRatio ||
+            "VIDEO_ASPECT_RATIO_LANDSCAPE";
+          singleImage.imageAspect = mapVideoAspectToImageAspect(aspectValue);
+        }
+        try {
+          renderSingleImage();
+        } catch (_) {}
+        statusEl.textContent = "Config default dimuat.";
       } catch (_) {}
-      try {
-        updateModelBadge();
-      } catch (_) {}
-      try {
-        updateQuotaUI();
-      } catch (_) {}
-      if (!singleImage.manualAspect) {
-        const aspectValue =
-          el("settingAspect")?.value ||
-          CONFIG.defaultAspectRatio ||
-          "VIDEO_ASPECT_RATIO_LANDSCAPE";
-        singleImage.imageAspect = mapVideoAspectToImageAspect(aspectValue);
-      }
-      try {
-        renderSingleImage();
-      } catch (_) {}
-      statusEl.textContent = "Config default dimuat.";
-    } catch (_) {}
-  })();
+    })();
 
   const getModelConfig = (aspectValue) => {
     if (!aspectValue) return fallbackModelConfig;
@@ -753,9 +756,9 @@ export function initLegacyApp({ initialMode } = {}) {
     if (/PORTRAIT/i.test(a)) return "veo_3_1_t2v_fast_portrait_ultra_relaxed";
     return "veo_3_1_t2v_fast_ultra_relaxed";
   };
-  const DEFAULT_BUDGET = 75;
-  const DEFAULT_ALLOC = { single: 25, batch: 25, frame: 25 };
-  const readQuotaAlloc = () => {
+    const DEFAULT_BUDGET = 75;
+    const DEFAULT_ALLOC = { single: 25, batch: 25, frame: 25 };
+    const readQuotaAlloc = () => {
     let raw = "";
     try {
       raw = localStorage.getItem("quota.veo3fast.alloc") || "";
@@ -773,14 +776,14 @@ export function initLegacyApp({ initialMode } = {}) {
     const sum = [s, b, f].reduce((a, c) => a + (Number.isFinite(c) ? c : 0), 0);
     if (!Number.isFinite(sum) || sum <= 0)
       return { ...DEFAULT_ALLOC, budget: DEFAULT_BUDGET };
-    return {
-      single: Math.max(0, s),
-      batch: Math.max(0, b),
-      frame: Math.max(0, f),
-      budget: DEFAULT_BUDGET,
+      return {
+        single: Math.max(0, s),
+        batch: Math.max(0, b),
+        frame: Math.max(0, f),
+        budget: DEFAULT_BUDGET,
+      };
     };
-  };
-  const writeQuotaAlloc = (alloc) => {
+    const writeQuotaAlloc = (alloc) => {
     const s = Math.max(0, Number(alloc.single || 0));
     const b = Math.max(0, Number(alloc.batch || 0));
     const f = Math.max(0, Number(alloc.frame || 0));
@@ -789,47 +792,86 @@ export function initLegacyApp({ initialMode } = {}) {
       localStorage.setItem("quota.veo3fast.alloc", JSON.stringify(payload));
     } catch (_) {}
   };
-  const quotaLimitForMode = (mode) => {
-    const alloc = readQuotaAlloc();
-    return mode === "batch"
-      ? alloc.batch
-      : mode === "frame"
-      ? alloc.frame
-      : alloc.single;
-  };
-  const todayStr = () => {
-    const d = new Date();
-    const hours = d.getHours();
-    if (hours < 12) d.setDate(d.getDate() - 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const s = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${s}`;
-  };
-  const readQuota = (mode) => {
-    const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
-    let raw = "";
-    try {
-      raw = localStorage.getItem(key) || "";
-    } catch (_) {}
-    let obj = {};
-    try {
-      obj = raw ? JSON.parse(raw) : {};
-    } catch (_) {
-      obj = {};
-    }
-    const today = todayStr();
-    if (!obj || obj.date !== today) return { date: today, count: 0 };
-    const c = Number(obj.count || 0);
-    return { date: today, count: Number.isFinite(c) ? c : 0 };
-  };
-  const writeQuota = (mode, count) => {
-    const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
-    const value = { date: todayStr(), count: Math.max(0, Number(count || 0)) };
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (_) {}
-  };
+    const quotaLimitForMode = (mode) => {
+      const alloc = readQuotaAlloc();
+      return mode === "batch"
+        ? alloc.batch
+        : mode === "frame"
+        ? alloc.frame
+        : alloc.single;
+    };
+    const todayStr = () => {
+      const d = new Date();
+      const hours = d.getHours();
+      if (hours < 12) d.setDate(d.getDate() - 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const s = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${s}`;
+    };
+    const readQuota = (mode) => {
+      const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
+      let raw = "";
+      try {
+        raw = localStorage.getItem(key) || "";
+      } catch (_) {}
+      let obj = {};
+      try {
+        obj = raw ? JSON.parse(raw) : {};
+      } catch (_) {
+        obj = {};
+      }
+      const today = todayStr();
+      if (!obj || obj.date !== today) return { date: today, count: 0 };
+      const c = Number(obj.count || 0);
+      return { date: today, count: Number.isFinite(c) ? c : 0 };
+    };
+    const writeQuota = (mode, count) => {
+      const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
+      const value = { date: todayStr(), count: Math.max(0, Number(count || 0)) };
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (_) {}
+    };
+    const syncQuotaFromServer = async () => {
+      try {
+        const resp = await fetch("/api/usage/veo-today", {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (!resp.ok) return;
+        const data = await resp.json().catch(() => null);
+        if (!data || !data.ok) return;
+        const serverCountRaw =
+          data.veoCount !== undefined ? data.veoCount : data.count;
+        const serverCount = Number(serverCountRaw || 0);
+        if (!Number.isFinite(serverCount) || serverCount < 0) return;
+        const today = todayStr();
+        const modes = ["single", "batch", "frame"];
+        for (const mode of modes) {
+          const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
+          let nextVal = { date: today, count: serverCount };
+          try {
+            const raw = localStorage.getItem(key) || "";
+            if (raw) {
+              try {
+                const existing = JSON.parse(raw);
+                if (existing && existing.date === today) {
+                  const localCount = Number(existing.count || 0);
+                  if (
+                    Number.isFinite(localCount) &&
+                    localCount > serverCount
+                  ) {
+                    nextVal.count = localCount;
+                  }
+                }
+              } catch (_) {}
+            }
+            localStorage.setItem(key, JSON.stringify(nextVal));
+          } catch (_) {}
+        }
+      } catch (_) {}
+    };
   const updateQuotaUI = () => {
     const node = el("quotaLabel");
     if (!node) return;

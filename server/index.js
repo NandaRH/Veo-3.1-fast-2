@@ -160,6 +160,25 @@ const parseCookies = (cookieHeader) => {
     return {};
   }
 };
+const quotaTodayStr = () => {
+  try {
+    const d = new Date();
+    const hours = d.getHours();
+    if (Number.isFinite(hours) && hours < 12) {
+      d.setDate(d.getDate() - 1);
+    }
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const s = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${s}`;
+  } catch (_) {
+    try {
+      return new Date().toISOString().slice(0, 10);
+    } catch (_) {
+      return "1970-01-01";
+    }
+  }
+};
 const bumpUsage = (user, type) => {
   try {
     const { id, email, name, plan } = user || {};
@@ -175,11 +194,25 @@ const bumpUsage = (user, type) => {
       counts: { veo: 0, sora2: 0, image: 0 },
       createdAt: nowIso,
       updatedAt: nowIso,
+      daily: {},
     };
     cur.counts = cur.counts || { veo: 0, sora2: 0, image: 0 };
+    cur.daily = cur.daily || {};
     if (type === "veo") cur.counts.veo = (cur.counts.veo || 0) + 1;
     else if (type === "sora2") cur.counts.sora2 = (cur.counts.sora2 || 0) + 1;
     else if (type === "image") cur.counts.image = (cur.counts.image || 0) + 1;
+    const dayKey = quotaTodayStr();
+    const baseDaily = cur.daily[dayKey] || {
+      veo: 0,
+      sora2: 0,
+      image: 0,
+    };
+    if (type === "veo") baseDaily.veo = (baseDaily.veo || 0) + 1;
+    else if (type === "sora2")
+      baseDaily.sora2 = (baseDaily.sora2 || 0) + 1;
+    else if (type === "image")
+      baseDaily.image = (baseDaily.image || 0) + 1;
+    cur.daily[dayKey] = baseDaily;
     cur.email = email || cur.email;
     cur.name = name || cur.name;
     cur.plan = plan || cur.plan;
@@ -795,6 +828,10 @@ const requireAdmin = async (req, res, next) => {
       } catch (_) {}
     }
     if (!isAllowed) return res.status(403).json({ error: "Forbidden" });
+    try {
+      req.adminUserId = uid;
+      req.adminEmail = email;
+    } catch (_) {}
     next();
   } catch (e) {
     res.status(500).json({ error: String(e) });
@@ -885,6 +922,28 @@ app.post("/api/admin/users/:id/plan", requireAdmin, async (req, res) => {
       }
       await srSupabase.auth.admin.updateUserById(id, { user_metadata: meta });
     } catch (_) {}
+    // Jika user baru di-set sebagai admin, samakan kredit Sora dengan admin lain
+    if (plan === "admin") {
+      try {
+        let baseCredits = 0;
+        try {
+          const actingAdminId = String(req.adminUserId || "").trim();
+          if (actingAdminId) {
+            baseCredits = await getUserCredits(actingAdminId);
+          } else if (srSupabase) {
+            const { data: anyAdmin } = await srSupabase
+              .from("users")
+              .select("sora2_credits")
+              .eq("plan", "admin")
+              .limit(1)
+              .single();
+            const n = Number(anyAdmin?.sora2_credits || 0);
+            if (Number.isFinite(n)) baseCredits = n;
+          }
+        } catch (_) {}
+        await syncAdminCredits(baseCredits);
+      } catch (_) {}
+    }
     // Push realtime plan update ke user terkait (jika ada subscriber)
     try {
       const { plan: curPlan, expiry } = await fetchPlanForUser(id);
@@ -936,6 +995,39 @@ app.get("/api/admin/credits", requireAdmin, async (req, res) => {
     res.json({ ok: true, credits: { sora2: val } });
   } catch (e) {
     res.status(500).json({ error: String(e) });
+  }
+});
+
+app.get("/api/usage/veo-today", (req, res) => {
+  try {
+    const cookies = parseCookies(req.headers["cookie"] || "");
+    const uid = String(
+      cookies.auth_uid || cookies.uid || cookies.uid || ""
+    ).trim();
+    const dayKey = quotaTodayStr();
+    if (!uid) {
+      return res.json({
+        ok: false,
+        reason: "NO_USER",
+        date: dayKey,
+        veoCount: 0,
+      });
+    }
+    const stats = readUsageStats();
+    const cur = stats && stats[uid] ? stats[uid] : null;
+    const daily =
+      cur && cur.daily && typeof cur.daily === "object"
+        ? cur.daily[dayKey] || {}
+        : {};
+    const rawCount = Number(daily.veo || 0);
+    const veoCount = Number.isFinite(rawCount) && rawCount > 0 ? rawCount : 0;
+    return res.json({
+      ok: true,
+      date: dayKey,
+      veoCount,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: String(e) });
   }
 });
 
