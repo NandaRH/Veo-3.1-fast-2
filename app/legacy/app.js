@@ -801,13 +801,19 @@ export function initLegacyApp({ initialMode } = {}) {
         : alloc.single;
     };
     const todayStr = () => {
-      const d = new Date();
-      const hours = d.getHours();
-      if (hours < 12) d.setDate(d.getDate() - 1);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const s = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${s}`;
+      try {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const s = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${s}`;
+      } catch (_) {
+        try {
+          return new Date().toISOString().slice(0, 10);
+        } catch (_) {
+          return "1970-01-01";
+        }
+      }
     };
     const readQuota = (mode) => {
       const key = `quota.veo3fast.${quotaKeyForMode(mode)}`;
@@ -5560,8 +5566,9 @@ export function initLegacyApp({ initialMode } = {}) {
               if (stop0f) stop0f.disabled = true;
               return;
             }
+          } else {
+            quotaPendingIncrement = 1;
           }
-          quotaPendingIncrement = 1;
         } else {
           quotaPendingIncrement = 0;
         }
@@ -5598,6 +5605,8 @@ export function initLegacyApp({ initialMode } = {}) {
         if (useSingleStartImage) {
           baseRequest.startImage = { mediaId: singleMediaId };
         }
+        // Default: gunakan request sesuai pilihan model saat ini
+        requests = [baseRequest];
         const plan = getPlan();
         const paid = isPaidPlan(plan);
         const isAdmin = isAdminPlan(plan);
@@ -5627,6 +5636,7 @@ export function initLegacyApp({ initialMode } = {}) {
               };
               if (useSingleStartImage)
                 newBase.startImage = { mediaId: singleMediaId };
+              // Jika kuota habis, alihkan ke Ultra Relaxed dan jangan hitung kuota Fast
               requests = [newBase];
               statusEl.textContent = "Kuota habis, dialihkan ke Ultra Relaxed.";
               quotaPendingIncrement = 0;
@@ -5638,12 +5648,12 @@ export function initLegacyApp({ initialMode } = {}) {
               if (stop1s) stop1s.disabled = true;
               return;
             }
+          } else {
+            quotaPendingIncrement = 1;
           }
-          quotaPendingIncrement = 1;
         } else {
           quotaPendingIncrement = 0;
         }
-        requests = [baseRequest];
       }
       // Gunakan clientContext dari server dan tambahkan sessionId dinamis
       const clientContext = CONFIG.clientContext || undefined;

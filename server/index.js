@@ -163,10 +163,6 @@ const parseCookies = (cookieHeader) => {
 const quotaTodayStr = () => {
   try {
     const d = new Date();
-    const hours = d.getHours();
-    if (Number.isFinite(hours) && hours < 12) {
-      d.setDate(d.getDate() - 1);
-    }
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
     const s = String(d.getDate()).padStart(2, "0");

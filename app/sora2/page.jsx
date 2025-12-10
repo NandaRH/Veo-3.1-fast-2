@@ -487,9 +487,14 @@ export default function Sora2Page() {
     try {
       if (session !== pollSessionRef.current) {
         setIsPolling(false);
+        stopTimer();
         return;
       }
-      if (!uuid && !id) return setIsPolling(false);
+      if (!uuid && !id) {
+        setIsPolling(false);
+        stopTimer();
+        return;
+      }
       const q = new URLSearchParams();
       if (uuid) q.set("uuid", uuid);
       if (id) q.set("id", id);
@@ -556,12 +561,26 @@ export default function Sora2Page() {
           })
           .filter(Boolean);
         if (rthumbs.length) setRefThumbs(rthumbs);
+      } else {
+        // Untuk error jelas seperti 404/400, hentikan lebih cepat
+        if (resp.status === 404 || resp.status === 400) {
+          setIsPolling(false);
+          stopTimer();
+          setStatus(
+            "Job Sora tidak ditemukan atau sudah kadaluarsa. Coba kirim ulang."
+          );
+          return;
+        }
       }
     } catch (_) {}
     const next = attempt + 1;
-    if (next > 200) {
+    // Batasi maksimal ~6 menit polling (120 x 3s)
+    if (next > 120) {
       setIsPolling(false);
       stopTimer();
+      setStatus(
+        "Timeout saat mengecek status Sora. Jika video belum muncul, klik 'Check Status Manually' atau kirim ulang."
+      );
       return;
     }
     setTimeout(() => pollStatus(uuid, id, next, session), 3000);
