@@ -38,8 +38,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (termasuk devDependencies untuk build)
+RUN npm ci
 
 # Install Playwright browsers
 RUN npx playwright install chromium
@@ -47,7 +47,15 @@ RUN npx playwright install chromium
 # Copy source code
 COPY . .
 
-# Build Next.js
+# Build arguments untuk NEXT_PUBLIC variables (dibutuhkan saat build)
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Set sebagai environment variables untuk build
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Build Next.js dengan environment variables
 RUN npm run build || true
 
 # Create browser-data directory
@@ -56,7 +64,7 @@ RUN mkdir -p browser-data
 # Expose port
 EXPOSE 8790
 
-# Environment variables
+# Environment variables (runtime)
 ENV NODE_ENV=production
 ENV PORT=8790
 # Virtual display untuk Xvfb
