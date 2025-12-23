@@ -602,13 +602,16 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
           };
         }
 
-        // Step 3: Make API request from browser
+        // Step 3: Make API request from browser (use browser's session cookies)
         const response = await fetch(url, {
           method: method,
+          credentials: 'include',  // IMPORTANT: Include cookies
           headers: {
             'Content-Type': 'text/plain; charset=UTF-8',
             'Accept': 'application/json',
-            ...headers
+            'Origin': 'https://labs.google',
+            'Referer': 'https://labs.google/fx/tools/flow'
+            // Don't pass external Authorization header, use browser's cookies
           },
           body: JSON.stringify(finalPayload)
         });
