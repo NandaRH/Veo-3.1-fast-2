@@ -1,0 +1,46 @@
+2025/12/23-16:01:22.962 4dfc Reusing MANIFEST C:\Users\farrel\Downloads\VEO FIX\Veo.31 fast\browser-data\Profile 1\IndexedDB\https_labs.google_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/23-16:01:22.964 4dfc Recovering log #29
+2025/12/23-16:01:22.965 4dfc Reusing old log C:\Users\farrel\Downloads\VEO FIX\Veo.31 fast\browser-data\Profile 1\IndexedDB\https_labs.google_0.indexeddb.leveldb/000029.log 
+2025/12/23-16:01:23.688 48a4 Level-0 table #34: started
+2025/12/23-16:01:23.742 48a4 Level-0 table #34: 1619 bytes OK
+2025/12/23-16:01:23.744 48a4 Delete type=0 #29
+2025/12/23-16:01:23.745 4dfc Manual compaction at level-0 from '\x00\x0d\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0e\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0d\x00\x00\x05' @ 634 : 1
+2025/12/23-16:01:23.745 4dfc Compacting 1@0 + 1@1 files
+2025/12/23-16:01:23.793 4dfc Generated table #35@0: 159 keys, 3585 bytes
+2025/12/23-16:01:23.794 4dfc Compacted 1@0 + 1@1 files => 3585 bytes
+2025/12/23-16:01:23.796 4dfc compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/23-16:01:23.798 4dfc Delete type=2 #34
+2025/12/23-16:01:23.800 4dfc Manual compaction at level-0 from '\x00\x0d\x00\x00\x05' @ 634 : 1 .. '\x00\x0e\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/12/23-16:01:30.370 48a4 Level-0 table #37: started
+2025/12/23-16:01:30.425 48a4 Level-0 table #37: 885 bytes OK
+2025/12/23-16:01:30.428 48a4 Delete type=2 #31
+2025/12/23-16:01:30.429 48a4 Delete type=0 #33
+2025/12/23-16:01:30.434 4dfc Manual compaction at level-0 from '\x00\x0e\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0f\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0e\x00\x00\x05' @ 665 : 1
+2025/12/23-16:01:30.435 4dfc Compacting 1@0 + 1@1 files
+2025/12/23-16:01:30.486 4dfc Generated table #38@0: 159 keys, 3404 bytes
+2025/12/23-16:01:30.486 4dfc Compacted 1@0 + 1@1 files => 3404 bytes
+2025/12/23-16:01:30.490 4dfc compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/23-16:01:30.494 4dfc Delete type=2 #37
+2025/12/23-16:01:30.495 4dfc Manual compaction at level-0 from '\x00\x0e\x00\x00\x05' @ 665 : 1 .. '\x00\x0f\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/12/23-16:02:49.733 48a4 Level-0 table #40: started
+2025/12/23-16:02:49.787 48a4 Level-0 table #40: 1173 bytes OK
+2025/12/23-16:02:49.794 48a4 Delete type=2 #35
+2025/12/23-16:02:49.794 48a4 Delete type=0 #36
+2025/12/23-16:02:49.797 4dfc Manual compaction at level-0 from '\x00\x0f\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x10\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0f\x00\x00\x05' @ 696 : 1
+2025/12/23-16:02:49.797 4dfc Compacting 1@0 + 1@1 files
+2025/12/23-16:02:49.834 4dfc Generated table #41@0: 160 keys, 3421 bytes
+2025/12/23-16:02:49.835 4dfc Compacted 1@0 + 1@1 files => 3421 bytes
+2025/12/23-16:02:49.836 4dfc compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/23-16:02:49.837 4dfc Delete type=2 #40
+2025/12/23-16:02:49.839 4dfc Manual compaction at level-0 from '\x00\x0f\x00\x00\x05' @ 696 : 1 .. '\x00\x10\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/12/23-16:06:18.482 48a4 Level-0 table #43: started
+2025/12/23-16:06:18.559 48a4 Level-0 table #43: 1155 bytes OK
+2025/12/23-16:06:18.561 48a4 Delete type=2 #38
+2025/12/23-16:06:18.561 48a4 Delete type=0 #39
+2025/12/23-16:06:18.562 4dfc Manual compaction at level-0 from '\x00\x10\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at '\x00\x10\x00\x00\x05' @ 727 : 1
+2025/12/23-16:06:18.562 4dfc Compacting 1@0 + 1@1 files
+2025/12/23-16:06:18.631 4dfc Generated table #44@0: 168 keys, 3524 bytes
+2025/12/23-16:06:18.632 4dfc Compacted 1@0 + 1@1 files => 3524 bytes
+2025/12/23-16:06:18.635 4dfc compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/23-16:06:18.637 4dfc Delete type=2 #43
+2025/12/23-16:06:18.650 4dfc Manual compaction at level-0 from '\x00\x10\x00\x00\x05' @ 727 : 1 .. '\x00\x11\x00\x00\x00' @ 0 : 0; will stop at (end)

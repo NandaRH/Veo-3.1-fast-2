@@ -1,0 +1,14 @@
+2025/12/23-14:18:19.644 1754 Reusing MANIFEST C:\Users\farrel\Downloads\VEO FIX\Veo.31 fast\browser-data\Default\IndexedDB\https_labs.google_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/23-14:18:19.646 1754 Recovering log #42
+2025/12/23-14:18:19.647 1754 Reusing old log C:\Users\farrel\Downloads\VEO FIX\Veo.31 fast\browser-data\Default\IndexedDB\https_labs.google_0.indexeddb.leveldb/000042.log 
+2025/12/23-14:18:19.647 1754 Delete type=2 #40
+2025/12/23-14:18:19.696 1f20 Level-0 table #47: started
+2025/12/23-14:18:19.722 1f20 Level-0 table #47: 1176 bytes OK
+2025/12/23-14:18:19.724 1f20 Delete type=0 #42
+2025/12/23-14:18:19.725 1754 Manual compaction at level-0 from '\x00\x11\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x12\x00\x00\x00' @ 0 : 0; will stop at '\x00\x11\x00\x00\x05' @ 698 : 1
+2025/12/23-14:18:19.725 1754 Compacting 1@0 + 1@1 files
+2025/12/23-14:18:19.756 1754 Generated table #48@0: 189 keys, 3888 bytes
+2025/12/23-14:18:19.756 1754 Compacted 1@0 + 1@1 files => 3888 bytes
+2025/12/23-14:18:19.757 1754 compacted to: files[ 0 1 1 0 0 0 0 ]
+2025/12/23-14:18:19.758 1754 Delete type=2 #47
+2025/12/23-14:18:19.759 1754 Manual compaction at level-0 from '\x00\x11\x00\x00\x05' @ 698 : 1 .. '\x00\x12\x00\x00\x00' @ 0 : 0; will stop at (end)
