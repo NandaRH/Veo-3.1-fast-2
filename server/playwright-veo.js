@@ -18,6 +18,10 @@ const RECAPTCHA_KEY = "6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV";
 // Set BROWSER_TYPE=firefox untuk test Firefox
 const BROWSER_TYPE = process.env.BROWSER_TYPE || "chromium"; // Default Chromium
 
+// n8n Webhook URL untuk bypass IP blocking
+// Jika diset, request akan dikirim via n8n SumoPod sebagai proxy
+const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || null;
+
 // Event emitter untuk komunikasi dengan server
 export const veoEvents = new EventEmitter();
 
@@ -578,22 +582,17 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
     
     console.log("[Playwright] ✓ grecaptcha available, executing request...");
 
-    // Execute reCAPTCHA dan API request dari dalam browser
-    const result = await activePage.evaluate(async ({ url, method, headers, payload }) => {
+    // ============ STEP 1: Generate reCAPTCHA token dari browser ============
+    const tokenResult = await activePage.evaluate(async (payload) => {
       try {
-        // Step 1: Get fresh reCAPTCHA token
         let recaptchaToken = null;
         if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
-          try {
-            const siteKey = '6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV';
-            recaptchaToken = await grecaptcha.enterprise.execute(siteKey, { action: 'FLOW_GENERATION' });
-            console.log('[Browser] Got reCAPTCHA token, length:', recaptchaToken.length);
-          } catch (e) {
-            console.error('[Browser] reCAPTCHA failed:', e);
-          }
+          const siteKey = '6LdsFiUsAAAAAIjVDZcuLhaHiDn5nnHVXVRQGeMV';
+          recaptchaToken = await grecaptcha.enterprise.execute(siteKey, { action: 'FLOW_GENERATION' });
+          console.log('[Browser] Got reCAPTCHA token, length:', recaptchaToken.length);
         }
 
-        // Step 2: Inject token into payload
+        // Inject token into payload
         const finalPayload = { ...payload };
         if (recaptchaToken) {
           finalPayload.clientContext = {
@@ -602,47 +601,121 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
           };
         }
 
-        // Step 3: Make API request from browser (include both cookies AND auth header)
-        const response = await fetch(url, {
-          method: method,
-          credentials: 'include',  // Include cookies for session
-          headers: {
-            'Content-Type': 'text/plain; charset=UTF-8',
-            'Accept': 'application/json',
-            'Origin': 'https://labs.google',
-            'Referer': 'https://labs.google/fx/tools/flow',
-            ...headers  // Include Authorization header passed from server
-          },
-          body: JSON.stringify(finalPayload)
-        });
-
-        const contentType = response.headers.get('content-type') || '';
-        let data;
-        if (contentType.includes('application/json')) {
-          data = await response.json();
-        } else {
-          data = await response.text();
-        }
-
         return {
-          success: response.ok,
-          status: response.status,
-          data: data,
-          hasToken: !!recaptchaToken
+          success: true,
+          token: recaptchaToken,
+          payload: finalPayload
         };
       } catch (err) {
-        return {
+        return { success: false, error: String(err) };
+      }
+    }, payload);
+
+    if (!tokenResult.success) {
+      console.error("[Playwright] Failed to get reCAPTCHA token:", tokenResult.error);
+      return { success: false, error: tokenResult.error, status: 403 };
+    }
+
+    console.log("[Playwright] ✓ reCAPTCHA token captured! Length:", tokenResult.token?.length);
+
+    // ============ STEP 2: Kirim request via n8n proxy atau langsung ============
+    let result;
+
+    if (N8N_WEBHOOK_URL) {
+      // ===== MODE: n8n Proxy (untuk Railway deployment) =====
+      console.log("[Playwright] 🌐 Using n8n proxy:", N8N_WEBHOOK_URL);
+      
+      try {
+        const proxyResponse = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            authorization: headers.Authorization || headers.authorization || '',
+            body: JSON.stringify(tokenResult.payload)
+          })
+        });
+
+        let proxyData;
+        const contentType = proxyResponse.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          proxyData = await proxyResponse.json();
+        } else {
+          proxyData = await proxyResponse.text();
+        }
+
+        console.log("[Playwright] n8n proxy response:", { 
+          status: proxyResponse.status, 
+          ok: proxyResponse.ok 
+        });
+
+        result = {
+          success: proxyResponse.ok,
+          status: proxyResponse.status,
+          data: proxyData,
+          hasToken: true,
+          via: 'n8n-proxy'
+        };
+      } catch (proxyError) {
+        console.error("[Playwright] n8n proxy error:", proxyError);
+        result = {
           success: false,
           status: 500,
-          error: String(err)
+          error: `n8n proxy error: ${String(proxyError)}`,
+          hasToken: true
         };
       }
-    }, { url, method, headers, payload });
+
+    } else {
+      // ===== MODE: Direct request dari browser (untuk local development) =====
+      console.log("[Playwright] 📡 Direct request from browser context...");
+      
+      result = await activePage.evaluate(async ({ url, method, headers, finalPayload }) => {
+        try {
+          const response = await fetch(url, {
+            method: method,
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'text/plain; charset=UTF-8',
+              'Accept': 'application/json',
+              'Origin': 'https://labs.google',
+              'Referer': 'https://labs.google/fx/tools/flow',
+              ...headers
+            },
+            body: JSON.stringify(finalPayload)
+          });
+
+          const contentType = response.headers.get('content-type') || '';
+          let data;
+          if (contentType.includes('application/json')) {
+            data = await response.json();
+          } else {
+            data = await response.text();
+          }
+
+          return {
+            success: response.ok,
+            status: response.status,
+            data: data,
+            hasToken: true,
+            via: 'direct'
+          };
+        } catch (err) {
+          return {
+            success: false,
+            status: 500,
+            error: String(err)
+          };
+        }
+      }, { url, method, headers, finalPayload: tokenResult.payload });
+    }
 
     console.log("[Playwright] API request result:", { 
       status: result.status, 
       hasToken: result.hasToken,
       success: result.success,
+      via: result.via || 'unknown',
       data: result.status === 403 ? JSON.stringify(result.data).substring(0, 500) : "(hidden)"
     });
 
