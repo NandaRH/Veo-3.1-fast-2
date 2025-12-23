@@ -1,9 +1,9 @@
-# Dockerfile untuk Railway dengan Xvfb (Virtual Display)
-# Ini memungkinkan browser "visible" tanpa monitor fisik
+# Dockerfile untuk Railway dengan Xvfb + noVNC (Virtual Display + Web Access)
+# Ini memungkinkan browser "visible" dan bisa diakses via web
 
 FROM node:20-slim
 
-# Install dependencies untuk Chromium + Xvfb
+# Install dependencies untuk Chromium + Xvfb + VNC
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -28,6 +28,13 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     # Xvfb untuk virtual display
     xvfb \
+    # VNC untuk remote access
+    x11vnc \
+    # noVNC untuk web-based VNC
+    novnc \
+    websockify \
+    # Window manager sederhana
+    fluxbox \
     # Tambahan untuk stealth
     libx11-xcb1 \
     libxcb1 \
@@ -61,16 +68,18 @@ RUN npm run build || true
 # Create browser-data directory
 RUN mkdir -p browser-data
 
-# Expose port
-EXPOSE 8790
+# Expose ports: App + noVNC
+EXPOSE 8790 6080
 
 # Environment variables (runtime)
 ENV NODE_ENV=production
 ENV PORT=8790
 # Virtual display untuk Xvfb
 ENV DISPLAY=:99
+# VNC password (optional, bisa diset via env var)
+ENV VNC_PASSWORD=veo123
 
-# Script untuk jalankan Xvfb + app
+# Script untuk jalankan Xvfb + VNC + app
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
