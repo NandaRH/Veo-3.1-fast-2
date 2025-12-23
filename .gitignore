@@ -33,6 +33,6 @@ Thumbs.db
 .idea/
 *.swp
 
-# Browser/Playwright cache
+# Browser session data (sensitive!)
 browser-data/
-firefox-data/
+browser-data-firefox/
