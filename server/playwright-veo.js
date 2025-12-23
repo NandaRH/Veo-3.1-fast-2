@@ -639,7 +639,8 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
     console.log("[Playwright] API request result:", { 
       status: result.status, 
       hasToken: result.hasToken,
-      success: result.success 
+      success: result.success,
+      data: result.status === 403 ? JSON.stringify(result.data).substring(0, 500) : "(hidden)"
     });
 
     return result;
