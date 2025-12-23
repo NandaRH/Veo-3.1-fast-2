@@ -9,21 +9,26 @@ import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { createClient } from "@supabase/supabase-js";
 
-// Playwright Browser Automation untuk bypass reCAPTCHA
-import playwrightVeo from "./playwright-veo.js";
-
 const envLocalPath = path.resolve(process.cwd(), ".env.server.local");
 
-// Prefer .env.server.local, fallback to .env
+// Prefer .env.server.local, fallback to .env - LOAD ENV BEFORE OTHER IMPORTS
 try {
   if (fs.existsSync(envLocalPath)) {
     dotenv.config({ path: envLocalPath });
+    console.log("[Server] Loaded .env.server.local");
   } else {
     dotenv.config();
+    console.log("[Server] Loaded .env");
   }
 } catch (e) {
   // If dotenv fails, continue; handler below will surface missing LABS_BEARER
 }
+
+// Log n8n webhook status
+console.log("[Server] N8N_WEBHOOK_URL:", process.env.N8N_WEBHOOK_URL ? "SET" : "NOT SET");
+
+// Playwright Browser Automation - IMPORT AFTER dotenv config!
+import playwrightVeo from "./playwright-veo.js";
 
 const app = express();
 const PORT = process.env.PORT || 8790;

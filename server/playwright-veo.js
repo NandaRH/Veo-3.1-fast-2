@@ -20,7 +20,8 @@ const BROWSER_TYPE = process.env.BROWSER_TYPE || "chromium"; // Default Chromium
 
 // n8n Webhook URL untuk bypass IP blocking
 // Jika diset, request akan dikirim via n8n SumoPod sebagai proxy
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || null;
+// Dibaca sebagai function agar env var terbaca setelah dotenv config
+const getN8nWebhookUrl = () => process.env.N8N_WEBHOOK_URL || null;
 
 // Event emitter untuk komunikasi dengan server
 export const veoEvents = new EventEmitter();
@@ -620,20 +621,21 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
 
     // ============ STEP 2: Kirim request via n8n proxy atau langsung ============
     let result;
+    const n8nWebhookUrl = getN8nWebhookUrl();
 
-    if (N8N_WEBHOOK_URL) {
+    if (n8nWebhookUrl) {
       // ===== MODE: n8n Proxy (untuk Railway deployment) =====
-      console.log("[Playwright] 🌐 Using n8n proxy:", N8N_WEBHOOK_URL);
+      console.log("[Playwright] 🌐 Using n8n proxy:", n8nWebhookUrl);
       
       try {
-        const proxyResponse = await fetch(N8N_WEBHOOK_URL, {
+        const proxyResponse = await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             authorization: headers.Authorization || headers.authorization || '',
-            body: JSON.stringify(tokenResult.payload)
+            body: tokenResult.payload  // Send as object, not string!
           })
         });
 
