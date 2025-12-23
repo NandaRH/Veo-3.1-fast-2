@@ -536,7 +536,7 @@ export function initLegacyApp({ initialMode } = {}) {
   const MODEL_KEY_MAP = {
     VIDEO_ASPECT_RATIO_LANDSCAPE: {
       text: "veo_3_1_t2v_fast_ultra",
-      startImage: "veo_3_1_i2v_s_fast_ultra_fl",
+      startImage: "veo_3_1_i2v_s_fast_ultra",  // Fixed: removed _fl suffix
       referenceImages: "veo_3_0_r2v_fast_ultra",
       extend: "veo_3_1_extend_fast_landscape_ultra",
       reshoot: "veo_3_0_reshoot_landscape",
@@ -544,7 +544,7 @@ export function initLegacyApp({ initialMode } = {}) {
     },
     VIDEO_ASPECT_RATIO_PORTRAIT: {
       text: "veo_3_1_t2v_fast_portrait_ultra",
-      startImage: "veo_3_1_i2v_s_fast_portrait_ultra_fl",
+      startImage: "veo_3_1_i2v_s_fast_portrait_ultra",  // Fixed: removed _fl suffix
       referenceImages: "veo_3_0_r2v_fast_portrait_ultra",
       extend: "veo_3_1_extend_fast_portrait_ultra",
       reshoot: "veo_3_0_reshoot_portrait",
@@ -789,8 +789,14 @@ export function initLegacyApp({ initialMode } = {}) {
   const isAdminPlan = (plan) => plan === "admin";
   const quotaKeyForMode = (mode) =>
     mode === "batch" ? "batch" : mode === "frame" ? "frame" : "single";
-  const relaxedModelForAspect = (aspect) => {
+  const relaxedModelForAspect = (aspect, isStartImage = false) => {
     const a = String(aspect || "");
+    if (isStartImage) {
+      // Image-to-Video relaxed models
+      if (/PORTRAIT/i.test(a)) return "veo_3_1_i2v_s_fast_portrait_ultra_relaxed";
+      return "veo_3_1_i2v_s_fast_ultra_relaxed";
+    }
+    // Text-to-Video relaxed models
     if (/PORTRAIT/i.test(a)) return "veo_3_1_t2v_fast_portrait_ultra_relaxed";
     return "veo_3_1_t2v_fast_ultra_relaxed";
   };
@@ -5060,9 +5066,22 @@ export function initLegacyApp({ initialMode } = {}) {
         modelConfig.startImage ||
         fallbackModelConfig.startImage ||
         textModelKey;
-      const videoModelKey = useStartImage
-        ? startImageModelKey
-        : selectedModelKey || textModelKey;
+      
+      // Check if user selected Ultra Relaxed model
+      const isSelectedRelaxed = isUnlimitedModelKey(selectedModelKey);
+      
+      // If using startImage and user selected relaxed, use relaxed I2V model
+      let videoModelKey;
+      if (useStartImage) {
+        if (isSelectedRelaxed) {
+          // Use relaxed I2V model
+          videoModelKey = relaxedModelForAspect(aspect, true);
+        } else {
+          videoModelKey = startImageModelKey;
+        }
+      } else {
+        videoModelKey = selectedModelKey || textModelKey;
+      }
       const styleKey = el("settingStyle").value;
       const resolution = el("settingResolution").value;
       const audioOn = el("settingAudio").checked;
@@ -5233,11 +5252,17 @@ export function initLegacyApp({ initialMode } = {}) {
           items = items.slice(0, 200);
           statusEl.textContent = "Membatasi batch ke 200 item.";
         }
-        const startImageModelKey =
-          modelConfig.startImage ||
-          fallbackModelConfig.startImage ||
-          textModelKey;
-        const textOnlyModelKey = textModelKey;
+        
+        // Check if user selected Ultra Relaxed model
+        const isSelectedRelaxedBatch = isUnlimitedModelKey(selectedModelKey);
+        
+        // Choose correct model key based on user's selection
+        const startImageModelKey = isSelectedRelaxedBatch
+          ? relaxedModelForAspect(aspect, true)  // Use relaxed I2V
+          : (modelConfig.startImage || fallbackModelConfig.startImage || textModelKey);
+        const textOnlyModelKey = isSelectedRelaxedBatch
+          ? relaxedModelForAspect(aspect, false)  // Use relaxed T2V
+          : textModelKey;
         const plan = getPlan();
         const paid = isPaidPlan(plan);
         const isAdmin = isAdminPlan(plan);
@@ -5249,18 +5274,18 @@ export function initLegacyApp({ initialMode } = {}) {
           const q = readQuota("batch");
           const limit = quotaLimitForMode("batch");
           if (q.count + need > limit) {
-            const relaxed = relaxedModelForAspect(aspect);
+            // Check if we're using startImage to pick correct relaxed model
+            const hasStartImage = !!batchMediaId || items.some((it) => String(it.mediaId || "").trim().length);
+            const relaxed = relaxedModelForAspect(aspect, false); // t2v relaxed
+            const relaxedI2V = relaxedModelForAspect(aspect, true); // i2v relaxed
             if (relaxed) {
               try {
                 const sel = el("settingModelKey");
                 if (sel) sel.value = relaxed;
               } catch (_) {}
-              // Override both startImageModelKey and textOnlyModelKey to relaxed to ensure no quota
-              // If start image is used, use relaxed start-image key; otherwise text-only relaxed key
-              const relaxedKey = relaxed;
-              // Recompute requests with relaxed key
-              const makeRelaxed = (scenePrompt, extra) => ({
-                videoModelKey: relaxedKey,
+              // Recompute requests with relaxed key - use i2v key for startImage requests
+              const makeRelaxed = (scenePrompt, extra, useI2V = false) => ({
+                videoModelKey: useI2V ? relaxedI2V : relaxed,
                 textInput: { prompt: scenePrompt },
                 aspectRatio: aspect,
                 seed: Math.floor(Math.random() * 40000) + 1,
@@ -5270,7 +5295,7 @@ export function initLegacyApp({ initialMode } = {}) {
                 ? items.map((it) =>
                     makeRelaxed(it.prompt || "", {
                       startImage: { mediaId: batchMediaId },
-                    })
+                    }, true)  // Use I2V model
                   )
                 : [];
               const relaxedMixedStart = items
@@ -5278,14 +5303,14 @@ export function initLegacyApp({ initialMode } = {}) {
                 .map((it) =>
                   makeRelaxed(it.prompt || "", {
                     startImage: { mediaId: String(it.mediaId).trim() },
-                  })
+                  }, true)  // Use I2V model
                 );
               const relaxedTextOnly = items
                 .filter(
                   (it) =>
                     !String(it.mediaId || "").trim().length && !batchMediaId
                 )
-                .map((it) => makeRelaxed(it.prompt || ""));
+                .map((it) => makeRelaxed(it.prompt || "", null, false));  // Use T2V model
               requests = relaxedStartGlobal.length
                 ? relaxedStartGlobal
                 : [...relaxedMixedStart, ...relaxedTextOnly];

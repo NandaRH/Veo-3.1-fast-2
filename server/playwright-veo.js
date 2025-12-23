@@ -634,6 +634,7 @@ export const executeApiRequest = async ({ url, method = "POST", headers = {}, pa
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            targetUrl: url,  // Send target Google API URL
             authorization: headers.Authorization || headers.authorization || '',
             body: tokenResult.payload  // Send as object, not string!
           })
