@@ -33,6 +33,6 @@ Thumbs.db
 .idea/
 *.swp
 
-# Browser session data (sensitive!) - TEMPORARILY COMMENTED FOR RAILWAY DEPLOY
-# browser-data/
-# browser-data-firefox/
+# Browser session data (sensitive!)
+browser-data/
+browser-data-firefox/
