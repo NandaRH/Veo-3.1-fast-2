@@ -81,6 +81,47 @@ export const hasValidSession = () => {
 };
 
 /**
+ * Hapus browser-data folder untuk fresh session
+ * Berguna ketika dapat 403 dan perlu reset
+ */
+export const clearBrowserData = async () => {
+  try {
+    // Tutup browser dulu jika sedang running
+    if (browserContext) {
+      try {
+        await browserContext.close();
+      } catch (e) {
+        console.log("[Playwright] Error closing browser:", e.message);
+      }
+      browserContext = null;
+      activePage = null;
+    }
+    
+    // Hapus folder browser-data
+    const dataDir = BROWSER_TYPE === "firefox" ? FIREFOX_DATA_DIR : USER_DATA_DIR;
+    
+    if (fs.existsSync(dataDir)) {
+      fs.rmSync(dataDir, { recursive: true, force: true });
+      console.log("[Playwright] ✓ Browser data cleared:", dataDir);
+    }
+    
+    // Buat ulang folder kosong
+    fs.mkdirSync(dataDir, { recursive: true });
+    
+    return { 
+      success: true, 
+      message: "Browser data berhasil dihapus. Silakan login ulang." 
+    };
+  } catch (e) {
+    console.error("[Playwright] Failed to clear browser data:", e);
+    return { 
+      success: false, 
+      error: e.message 
+    };
+  }
+};
+
+/**
  * Launch browser dengan persistent context
  * @param {Object} options 
  * @param {boolean} options.headless - Jalankan headless (default: auto-detect dari session)

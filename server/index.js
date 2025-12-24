@@ -28,7 +28,7 @@ try {
 console.log("[Server] N8N_WEBHOOK_URL:", process.env.N8N_WEBHOOK_URL ? "SET" : "NOT SET");
 
 // Playwright Browser Automation - IMPORT AFTER dotenv config!
-import playwrightVeo from "./playwright-veo.js";
+import playwrightVeo, { clearBrowserData } from "./playwright-veo.js";
 
 const app = express();
 const PORT = process.env.PORT || 8790;
@@ -45,6 +45,22 @@ try {
   fs.mkdirSync(uploadsDir, { recursive: true });
 } catch (_) {}
 app.use("/uploads", express.static(uploadsDir));
+
+// ===== API: Clear Browser Data (untuk reset session dari remote) =====
+app.post("/api/clear-browser-data", async (req, res) => {
+  console.log("[API] Clear browser data requested");
+  try {
+    const result = await clearBrowserData();
+    if (result.success) {
+      res.json({ success: true, message: result.message });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (e) {
+    console.error("[API] Clear browser data error:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // Set ffmpeg binary path (ffmpeg-static)
 try {

@@ -414,6 +414,45 @@ export default function BrowserModePage() {
     }
   };
 
+  // Clear browser data (reset session)
+  const [isClearingData, setIsClearingData] = useState(false);
+  
+  const handleClearBrowserData = async () => {
+    if (!confirm("⚠️ Hapus browser data? Session akan di-reset dan Playwright akan start fresh.")) {
+      return;
+    }
+    
+    setIsClearingData(true);
+    addLog("warning", "🗑️ Menghapus browser data...");
+    
+    try {
+      const res = await fetch("/api/clear-browser-data", { method: "POST" });
+      const data = await res.json();
+      
+      if (data.success) {
+        addLog("success", `✅ ${data.message}`);
+        // Reset local state
+        setCapturedToken(null);
+        setTokenAge(null);
+        setBrowserStatus({
+          browserRunning: false,
+          pageReady: false,
+          isGenerating: false,
+          currentUrl: null,
+          isLoggedIn: false,
+          isOnVideoFx: false,
+        });
+      } else {
+        addLog("error", `❌ Gagal: ${data.error}`);
+      }
+    } catch (e) {
+      addLog("error", `Error: ${e.message}`);
+    }
+    
+    setIsClearingData(false);
+    fetchBrowserStatus();
+  };
+
   if (!session || !isAdmin) {
     return (
       <div className="browser-mode-loading">
@@ -1037,6 +1076,15 @@ export default function BrowserModePage() {
               </button>
             </>
           )}
+          {/* Clear Browser Data button - always visible */}
+          <button
+            className="btn btn-danger"
+            onClick={handleClearBrowserData}
+            disabled={isClearingData || browserStatus.isGenerating}
+            style={{ marginLeft: 'auto' }}
+          >
+            {isClearingData ? "⏳ Clearing..." : "🗑️ Clear Browser Data"}
+          </button>
         </div>
 
         {browserStatus.browserRunning && (
