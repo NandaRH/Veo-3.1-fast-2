@@ -86,31 +86,89 @@ export const hasValidSession = () => {
  */
 export const clearBrowserData = async () => {
   try {
-    // Tutup browser dulu jika sedang running
+    console.log("[Playwright] Clearing browser data...");
+    
+    // Tutup browser context dulu jika sedang running
     if (browserContext) {
       try {
+        console.log("[Playwright] Closing browser context...");
         await browserContext.close();
+        console.log("[Playwright] Browser context closed");
       } catch (e) {
-        console.log("[Playwright] Error closing browser:", e.message);
+        console.log("[Playwright] Error closing browser context:", e.message);
       }
       browserContext = null;
       activePage = null;
     }
     
-    // Hapus folder browser-data
-    const dataDir = BROWSER_TYPE === "firefox" ? FIREFOX_DATA_DIR : USER_DATA_DIR;
-    
-    if (fs.existsSync(dataDir)) {
-      fs.rmSync(dataDir, { recursive: true, force: true });
-      console.log("[Playwright] ✓ Browser data cleared:", dataDir);
+    // Tutup browser instance juga jika ada
+    if (browserInstance) {
+      try {
+        console.log("[Playwright] Closing browser instance...");
+        await browserInstance.close();
+        console.log("[Playwright] Browser instance closed");
+      } catch (e) {
+        console.log("[Playwright] Error closing browser instance:", e.message);
+      }
+      browserInstance = null;
     }
     
-    // Buat ulang folder kosong
-    fs.mkdirSync(dataDir, { recursive: true });
+    // Tunggu sebentar agar file handles dilepas
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const dataDir = BROWSER_TYPE === "firefox" ? FIREFOX_DATA_DIR : USER_DATA_DIR;
+    
+    // Untuk Railway: Coba clear isi folder daripada hapus folder (volume mount issue)
+    if (fs.existsSync(dataDir)) {
+      try {
+        // Metode 1: Gunakan rm -rf via shell (lebih reliable)
+        const { execSync } = await import('child_process');
+        try {
+          if (process.platform === 'win32') {
+            execSync(`rmdir /s /q "${dataDir}"`, { stdio: 'ignore' });
+          } else {
+            execSync(`rm -rf "${dataDir}"/*`, { stdio: 'ignore' });
+            execSync(`rm -rf "${dataDir}"/.*`, { stdio: 'ignore' }); // hidden files
+          }
+          console.log("[Playwright] ✓ Browser data cleared via shell command");
+        } catch (shellError) {
+          console.log("[Playwright] Shell command failed:", shellError.message);
+          
+          // Metode 2: Clear file by file
+          try {
+            const items = fs.readdirSync(dataDir);
+            for (const item of items) {
+              const itemPath = path.join(dataDir, item);
+              try {
+                fs.rmSync(itemPath, { recursive: true, force: true, maxRetries: 3 });
+              } catch (itemError) {
+                console.log(`[Playwright] Could not delete ${item}:`, itemError.message);
+              }
+            }
+            console.log("[Playwright] ✓ Browser data files cleared");
+          } catch (listError) {
+            console.log("[Playwright] Could not list directory:", listError.message);
+          }
+        }
+      } catch (e) {
+        console.log("[Playwright] Clear failed:", e.message);
+      }
+    }
+    
+    // Buat ulang folder jika sudah terhapus
+    try {
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+    } catch (_) {}
+    
+    // Reset token state juga
+    capturedRecaptchaToken = null;
+    tokenCapturedAt = null;
     
     return { 
       success: true, 
-      message: "Browser data berhasil dihapus. Silakan login ulang." 
+      message: "Browser data berhasil dihapus. Klik 'Buka Browser' untuk start fresh." 
     };
   } catch (e) {
     console.error("[Playwright] Failed to clear browser data:", e);
